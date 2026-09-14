@@ -1,4 +1,4 @@
-import React, { useReducer, useState, useRef, useEffect } from 'react';
+import React, { useReducer, useState, useRef, useEffect, useCallback } from 'react';
 import { inventoryReducer, initialInventory } from '../reducers/inventoryReducer';
 
 function InventoryManager() {
@@ -6,13 +6,7 @@ function InventoryManager() {
   const [nombre, setNombre] = useState('');
   const [stock, setStock] = useState(1);
   const [categoria, setCategoria] = useState('Hardware');
-
-  // useRef para manipular directamente el DOM (Focus)
   const inputNombreRef = useRef(null);
-
-  // useRef para almacenar un valor mutable que no dispara re-renders
-  const renderCount = useRef(0);
-  renderCount.current += 1;
 
   useEffect(() => {
     inputNombreRef.current?.focus();
@@ -30,12 +24,18 @@ function InventoryManager() {
     inputNombreRef.current?.focus();
   };
 
+  // useCallback para funciones pasadas a elementos o componentes
+  const handleUpdateStock = useCallback((id, newStock) => {
+    dispatch({ type: 'UPDATE_STOCK', payload: { id, stock: newStock } });
+  }, []);
+
+  const handleRemove = useCallback((id) => {
+    dispatch({ type: 'REMOVE_PRODUCT', payload: id });
+  }, []);
+
   return (
     <div style={{ maxWidth: '700px', margin: '20px auto', background: '#1e293b', padding: '24px', borderRadius: '12px' }}>
-      <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '8px' }}>
-        Renderizados del componente (useRef): {renderCount.current}
-      </div>
-      <h2 style={{ color: '#38bdf8', marginBottom: '16px' }}>📦 Gestor de Inventario con useReducer & useRef</h2>
+      <h2 style={{ color: '#38bdf8', marginBottom: '16px' }}>📦 Gestor Optimizado con useCallback</h2>
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         <input ref={inputNombreRef} type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Producto" style={{ flex: 2, padding: '8px' }} />
         <input type="number" value={stock} onChange={e => setStock(e.target.value)} min="0" style={{ width: '80px', padding: '8px' }} />
@@ -47,9 +47,10 @@ function InventoryManager() {
         {state.products.map(p => (
           <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #334155', color: '#f8fafc' }}>
             <span>{p.name} - Stock: {p.stock}</span>
-            <button onClick={() => dispatch({ type: 'REMOVE_PRODUCT', payload: p.id })} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px' }}>
-              Eliminar
-            </button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button onClick={() => handleUpdateStock(p.id, p.stock + 1)} style={{ padding: '2px 8px' }}>+1</button>
+              <button onClick={() => handleRemove(p.id)} style={{ background: '#ef4444', color: 'white', padding: '2px 8px' }}>Eliminar</button>
+            </div>
           </li>
         ))}
       </ul>
